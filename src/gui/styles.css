@@ -1,0 +1,19 @@
+/* Author: Przemysław Sałęga */
+
+.borderPane{
+    -fx-border-color: #acacac;
+}
+
+.gridPane{
+    -fx-border-color: #acacac;
+}
+
+.gridPaneInternal{
+    -fx-border-style: solid none none none;
+    -fx-border-color: #acacac;
+}
+
+.coloredLabel{
+    -fx-text-fill: crimson;
+    -fx-font-size: 15;
+}
