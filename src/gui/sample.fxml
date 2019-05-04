@@ -24,6 +24,8 @@
                 fx:id="keyGenerateLabel"></Label>
                 <Button text="Generuj klucz" GridPane.columnIndex="0" GridPane.rowIndex="1" fx:id="keyGenerateButton"></Button>
                 <Button text="Wczytaj klucz" GridPane.columnIndex="1" GridPane.rowIndex="1" fx:id="keyReadButton"></Button>
+                <Button text="Szyfruj" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.columnSpan="2" disable="true"
+                        fx:id="encryptButton"></Button>
                 <Button text="Zapisz klucz do pliku" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" disable="true"
                 fx:id="keySaveButton"></Button>
             </GridPane>
