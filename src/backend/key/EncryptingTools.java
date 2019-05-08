@@ -4,6 +4,7 @@ package backend.key;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextArea;
 
 import java.util.List;
 
@@ -36,6 +37,22 @@ public class EncryptingTools {
             progressBarStatus.setText("");
         }
         return new String(chars);
+    }
+
+    public static CharSwap swapLetters(char from, char to, TextArea textArea){
+        char[] text = textArea.getText().toCharArray();
+        boolean exists = false;
+        for(int i = 0; i<text.length; i++){
+            if(text[i] == from){
+                exists = true;
+                text[i] = to;
+            }
+        }
+        if(exists){
+            textArea.setText(new String(text));
+            return new CharSwap(from, to);
+        }
+        return null;
     }
 
 }

@@ -19,15 +19,11 @@ public class KeyGenerator {
     }
 
     public static List<Character> generateKey(){
-        List<Character> list = new ArrayList<>();
+        List<Character> list = getCharactersInOriginalOrder();
         List<Character> key = new ArrayList<>();
-        int number = 65536;
-        for(int index=0;index<number; index++) {
-            list.add((char)index);
-        }
         Random generator = new Random();
-        for(int i = 0; i<number; i++){
-            int index = generator.nextInt(number - i);
+        for(int i = 0; i<65536; i++){
+            int index = generator.nextInt(65536 - i);
             key.add(list.get(index));
             list.remove(index);
         }

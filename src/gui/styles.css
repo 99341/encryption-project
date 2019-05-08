@@ -17,3 +17,7 @@
     -fx-text-fill: crimson;
     -fx-font-size: 15;
 }
+
+.nLabel{
+    -fx-font-size: 15;
+}

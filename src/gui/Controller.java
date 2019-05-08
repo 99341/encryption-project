@@ -2,6 +2,7 @@
 
 package gui;
 
+import backend.key.CharSwap;
 import backend.key.EncryptingTools;
 import backend.key.KeyGenerator;
 import backend.stats.StatCounter;
@@ -10,14 +11,12 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class Controller implements Initializable{
 
@@ -28,6 +27,8 @@ public class Controller implements Initializable{
 
     private Map<Character, Integer> modelStats;
     private Map<Character, Integer> encryptedTextStats;
+
+    private LinkedList<CharSwap> charSwaps;
 
     //labels
     @FXML
@@ -60,18 +61,21 @@ public class Controller implements Initializable{
     TextArea encryptedTextArea;
     @FXML
     TextArea statTextArea;
+    @FXML
+    TextArea swapHistoryTextArea;
 
     //choice boxes
     @FXML
-    ChoiceBox encryptedTextChars;
+    ChoiceBox<Character> encryptedTextChars;
     @FXML
-    ChoiceBox utfChars;
+    ChoiceBox<Character> utfChars;
 
     @FXML
     ProgressBar progressBar;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        charSwaps = new LinkedList<>();
         keyGenerateButton.setOnAction(e -> generateKey());
         keySaveButton.setOnAction(e -> saveKey());
         encryptButton.setOnAction(e -> encrypt());
@@ -79,6 +83,7 @@ public class Controller implements Initializable{
         encryptedTextArea.setWrapText(true);
         readFileButton.setOnAction(e -> loadFileAndGenerateStats());
         progressBar.setProgress(0);
+        changeButton.setOnAction(e -> swapLetters());
     }
 
     private void generateKey(){
@@ -102,16 +107,22 @@ public class Controller implements Initializable{
     }
 
     private void loadFileAndGenerateStats(){
-        String fileName = "pan_tadeusz_ksiega_I.txt";
-        String path = System.getProperty("user.dir") + "/" + fileName;
-        String text = StatCounter.parseFile(new File(path), Charset.forName("Cp1250"));
-        modelStats = StatCounter.createStats(text);
-        statTextArea.setText("Statystyka języka na podstawie pliku " + fileName + ":\n"
-                + StatCounter.parseStats(modelStats));
-        statLoadedLabel.setText("Statystyka wygenerowana.");
-        statLoadedLabel.setTextFill(Color.GREEN);
-        generateEncryptedTextStats();
-        addOptionsToChoiceBoxes();
+        //String fileName = "pan_tadeusz_ksiega_I.txt";
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Wczytaj plik ze statystyką");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir") + "/"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Plik TXT", "*.txt"));
+        File file = fileChooser.showOpenDialog(keyGenerateLabel.getScene().getWindow());
+        if(file != null){
+            String text = StatCounter.parseFile(file, Charset.forName("Cp1250"));
+            modelStats = StatCounter.createStats(text);
+            statTextArea.setText("Statystyka języka na podstawie pliku " + file.getName() + ":\n"
+                    + StatCounter.parseStats(modelStats));
+            statLoadedLabel.setText("Statystyka wygenerowana.");
+            statLoadedLabel.setTextFill(Color.GREEN);
+            generateEncryptedTextStats();
+            addOptionsToChoiceBoxes();
+        }
     }
 
     private void generateEncryptedTextStats(){
@@ -119,11 +130,23 @@ public class Controller implements Initializable{
     }
 
     private void addOptionsToChoiceBoxes(){
-        List<Character> encryptedCharsList = encryptedTextStats.entrySet().stream().map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        List<Character> modelCharsList = modelStats.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
+        modelStats = StatCounter.statsSort(modelStats);
+        encryptedTextStats = StatCounter.statsSort(encryptedTextStats);
+        List<Character> encryptedCharsList = new ArrayList<>(encryptedTextStats.keySet());
+        List<Character> modelCharsList = new ArrayList<>(modelStats.keySet());
         encryptedTextChars.setItems(FXCollections.observableArrayList(encryptedCharsList));
         utfChars.setItems(FXCollections.observableArrayList(modelCharsList));
+    }
+
+    private void swapLetters(){
+        char from = encryptedTextChars.getValue();
+        char to = utfChars.getValue();
+        CharSwap charSwap;
+        if((charSwap = EncryptingTools.swapLetters(from, to, encryptedTextArea)) != null){
+            FXCollections.replaceAll(encryptedTextChars.getItems(), from, to);
+            charSwaps.push(charSwap);
+            swapHistoryTextArea.setText(charSwap + "\n" + swapHistoryTextArea.getText());
+        }
     }
 
 }
