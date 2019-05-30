@@ -4,6 +4,7 @@ package backend.key;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -30,14 +31,28 @@ public class KeyGenerator {
         return key;
     }
 
-    public static void saveKeyToFile(Iterable<Character> collection, File file){
-        try(BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file))) {
-            for(Character character: collection){
-                bos.write(character);
-            }
-        }catch (IOException ioe){
-            ioe.printStackTrace();
+    public static void saveKeyToFile(List<Character> collection, File file) throws IOException {
+        byte[] charsAsBytes = new byte[collection.size()];
+        System.out.println(collection.size());
+        for(int i = 0; i<charsAsBytes.length; i++){
+            charsAsBytes[i] = (byte) collection.get(i).charValue();
         }
+        FileOutputStream fos = new FileOutputStream(file);
+        fos.write(charsAsBytes, 0, charsAsBytes.length);
+        fos.flush();
+        fos.close();
+    }
+
+    public static List<Character> readKeyFromFile(File file) throws IOException {
+        byte[] charsAsBytes = new byte[(int)file.length()];
+        FileInputStream fis = new FileInputStream(file);
+        System.out.println(fis.read(charsAsBytes, 0, charsAsBytes.length));
+        fis.close();
+        List<Character> list = new ArrayList<>();
+        for(byte b: charsAsBytes){
+            list.add((char)b);
+        }
+        return list;
     }
 
 }

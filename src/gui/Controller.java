@@ -14,9 +14,11 @@ import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Controller implements Initializable{
 
@@ -69,6 +71,8 @@ public class Controller implements Initializable{
     ChoiceBox<Character> encryptedTextChars;
     @FXML
     ChoiceBox<Character> utfChars;
+    @FXML
+    ChoiceBox<String> encodingChoiceBox;
 
     @FXML
     ProgressBar progressBar;
@@ -78,25 +82,45 @@ public class Controller implements Initializable{
         charSwaps = new LinkedList<>();
         keyGenerateButton.setOnAction(e -> generateKey());
         keySaveButton.setOnAction(e -> saveKey());
+        keyReadButton.setOnAction(e -> readKey());
+        keyReadButton.setDisable(true);
         encryptButton.setOnAction(e -> encrypt());
         originalTextArea.setWrapText(true);
         encryptedTextArea.setWrapText(true);
         readFileButton.setOnAction(e -> loadFileAndGenerateStats());
         progressBar.setProgress(0);
-        changeButton.setOnAction(e -> swapLetters());
+        changeButton.setOnAction(e -> swapLetters(false));
+        reverseButton.setOnAction(e -> swapLetters(true));
+        setDefaultEncodingList();
     }
 
     private void generateKey(){
         characterList = KeyGenerator.generateKey();
         keyGenerateLabel.setText("Klucz wygenerowany.");
         keyGenerateLabel.setTextFill(Color.GREEN);
-        keySaveButton.setDisable(false);
+        //keySaveButton.setDisable(false);
         encryptButton.setDisable(false);
     }
 
     private void saveKey(){
-        KeyGenerator.saveKeyToFile(characterList, new File("klucz.txt"));
+        try {
+            KeyGenerator.saveKeyToFile(characterList, new File("key.bin"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         keyGenerateLabel.setText("Klucz zapisany.");
+    }
+
+    private void readKey(){
+        List<Character> list = null;
+        try {
+            list = KeyGenerator.readKeyFromFile(new File("key.bin"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(list != null){
+            characterList = list;
+        }
     }
 
     private void encrypt(){
@@ -104,17 +128,27 @@ public class Controller implements Initializable{
         encryptedText = EncryptingTools.encrypt(originalText, KeyGenerator.getCharactersInOriginalOrder(), characterList,
                 progressBar, progressBarStatus);
         encryptedTextArea.setText(encryptedText);
+        unlockFeatures();
+    }
+
+    private void unlockFeatures(){
+        originalTextArea.setEditable(false);
+        readFileButton.setDisable(false);
+        encodingChoiceBox.setDisable(false);
+        encryptedTextChars.setDisable(false);
+        utfChars.setDisable(false);
+        changeButton.setDisable(false);
+        reverseButton.setDisable(false);
     }
 
     private void loadFileAndGenerateStats(){
-        //String fileName = "pan_tadeusz_ksiega_I.txt";
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Wczytaj plik ze statystyką");
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir") + "/"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Plik TXT", "*.txt"));
         File file = fileChooser.showOpenDialog(keyGenerateLabel.getScene().getWindow());
         if(file != null){
-            String text = StatCounter.parseFile(file, Charset.forName("Cp1250"));
+            String text = StatCounter.parseFile(file, Charset.forName(encodingChoiceBox.getValue()));
             modelStats = StatCounter.createStats(text);
             statTextArea.setText("Statystyka języka na podstawie pliku " + file.getName() + ":\n"
                     + StatCounter.parseStats(modelStats));
@@ -138,14 +172,38 @@ public class Controller implements Initializable{
         utfChars.setItems(FXCollections.observableArrayList(modelCharsList));
     }
 
-    private void swapLetters(){
-        char from = encryptedTextChars.getValue();
-        char to = utfChars.getValue();
+    private void setDefaultEncodingList(){
+        List<String> list = Charset.availableCharsets().entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
+        encodingChoiceBox.setItems(FXCollections.observableArrayList(list));
+        encodingChoiceBox.setValue("windows-1250");
+    }
+
+    private void swapLetters(boolean reverse){
+        char to, from;
+        if(reverse && !charSwaps.isEmpty()){
+            CharSwap charSwap = charSwaps.pop();
+            to = charSwap.getFrom();
+            from = charSwap.getTo();
+        }
+        if(reverse && charSwaps.isEmpty()){
+            return;
+        }
+        from = encryptedTextChars.getValue();
+        to = utfChars.getValue();
         CharSwap charSwap;
         if((charSwap = EncryptingTools.swapLetters(from, to, encryptedTextArea)) != null){
             FXCollections.replaceAll(encryptedTextChars.getItems(), from, to);
-            charSwaps.push(charSwap);
-            swapHistoryTextArea.setText(charSwap + "\n" + swapHistoryTextArea.getText());
+            if(reverse){
+                StringBuilder stringBuilder = new StringBuilder();
+                for(CharSwap cs : charSwaps){
+                    stringBuilder.append(cs.toString() + '\n');
+                }
+                swapHistoryTextArea.setText(stringBuilder.toString());
+            }
+            else{
+                charSwaps.push(charSwap);
+                swapHistoryTextArea.setText(charSwap + "\n" + swapHistoryTextArea.getText());
+            }
         }
     }
 
