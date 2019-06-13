@@ -185,11 +185,13 @@ public class Controller implements Initializable{
             to = charSwap.getFrom();
             from = charSwap.getTo();
         }
-        if(reverse && charSwaps.isEmpty()){
+        else if(reverse && charSwaps.isEmpty()){
             return;
         }
-        from = encryptedTextChars.getValue();
-        to = utfChars.getValue();
+        else{
+            from = encryptedTextChars.getValue();
+            to = utfChars.getValue();
+        }
         CharSwap charSwap;
         if((charSwap = EncryptingTools.swapLetters(from, to, encryptedTextArea)) != null){
             FXCollections.replaceAll(encryptedTextChars.getItems(), from, to);
